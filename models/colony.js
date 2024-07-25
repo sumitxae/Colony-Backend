@@ -10,6 +10,10 @@ const colonySchema = new mongoose.Schema(
       minlength: [3, "Colony name must be at least 3 characters long"],
       maxlength: [20, "Colony name must be at most 20 characters long"],
     },
+    colonyPicture: {
+      type: String,
+      default: "default.jpg",
+    },
     funds: {
       type: Number,
       default: 0,

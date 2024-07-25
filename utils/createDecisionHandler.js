@@ -1,5 +1,5 @@
 exports.createDecisionHandler = async (model, commonFields, details) => {
-  const newDecision = await new model({
+  const newDecision = await model.create({
     ...commonFields,
     details,
   });

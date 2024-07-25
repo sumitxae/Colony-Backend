@@ -3,16 +3,22 @@ const { catchAsyncError } = require("../middlewares/catchAsyncErrors");
 const { sendToken } = require("../utils/sendToken");
 const ErrorHandler = require("../utils/errorHandler");
 const { sendEmail } = require("../utils/mailer");
+const { handleBunnyUploads } = require("../utils/handleBunnyUploads");
 
 const registerController = catchAsyncError(async (req, res, next) => {
-  const newUser = await userModel.create(req.body);
+  const uploadHanlder = await handleBunnyUploads(req.file);
+  if (!uploadHanlder) {
+    return next(new ErrorHandler("File Upload Failed", 500));
+  }
+  const newUser = (await userModel.create(req.body)).populate("colonies");
+  newUser.pfp = uploadHanlder;
   sendToken(newUser, 201, res);
 });
 
 const loginController = catchAsyncError(async (req, res, next) => {
   const user = await userModel
     .findOne({ username: req.body.username })
-    .select("+password");
+    .select("+password").populate("colonies");
   if (!user) {
     return next(new ErrorHandler("User Not Found", 404));
   }
@@ -20,6 +26,7 @@ const loginController = catchAsyncError(async (req, res, next) => {
   if (!isPasswordMatch) {
     return next(new ErrorHandler("Invalid email or password", 401));
   }
+
   sendToken(user, 200, res);
 });
 
@@ -54,7 +61,9 @@ const resetPasswordController = catchAsyncError(async (req, res, next) => {
       message: "Password Updated Successfully",
     });
   } else {
-    return next(new ErrorHandler("Invalid Reset Password Link! Please Try Again", 401));
+    return next(
+      new ErrorHandler("Invalid Reset Password Link! Please Try Again", 401)
+    );
   }
 });
 

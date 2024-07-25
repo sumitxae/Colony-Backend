@@ -7,16 +7,18 @@ const decisionSchema = new mongoose.Schema(
     description: { type: String, required: true },
     colony: { type: mongoose.Types.ObjectId, ref: "colony", required: true },
     creator: { type: mongoose.Types.ObjectId, ref: "user", required: true },
+    forced: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now },
-    votingEndsAt: { type: Date, required: true },
+    votingEndsAt: { type: Date },
     status: {
       type: String,
       enum: ["Pending", "Passed", "Rejected"],
       default: "Pending",
     },
+    team: { type: mongoose.Types.ObjectId, ref: "team"},
     voters: [{ type: mongoose.Types.ObjectId, ref: "user", default: [] }],
     votes: [voteSchema],
-    maxStake: { type: Number, required: true },
+    maxStake: { type: Number },
   },
   { discriminatorKey: "type", collection: "decisions" }
 );

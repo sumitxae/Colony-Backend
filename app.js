@@ -17,7 +17,7 @@ const { generatedError } = require("./middlewares/error");
 const decisionUpdater = require("./utils/updateDecisions");
 
 var app = express();
-// view engine setup
+
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "ejs");
 
@@ -29,7 +29,14 @@ app.use(
   })
 );
 
-app.use(cors());
+app.use(cors({
+  origin: [
+    'http://localhost:5173',
+    // 'https://e-commerce-k2r4.onrender.com'
+  ],
+  credentials: true,
+}));
+
 app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -45,7 +52,7 @@ app.all("*", (req, res, next) => {
 });
 
 app.use(generatedError);
-setInterval(decisionUpdater, 60 * 1000); // Run every minute
+setInterval(decisionUpdater, 60 * 10 ); // Run every minute
 
 app.listen(
   process.env.PORT,

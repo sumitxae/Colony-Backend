@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const tokenSchema = new mongoose.Schema({
   token: {
     type: String,
-    unique: true,
+    // unique: true,
     required: true,
   },
   symbol: {

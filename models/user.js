@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-const plm = require("passport-local-mongoose");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const { catchAsyncError } = require("../middlewares/catchAsyncErrors");
@@ -14,6 +13,10 @@ const userSchema = new mongoose.Schema(
       trim: true,
       minlength: [3, "Username must be at least 3 characters long"],
       maxlength: [20, "Username must be at most 20 characters long"],
+    },
+    pfp:{
+      type: String,
+      default: "https://colony.b-cdn.net/defaultUserProfile.jpg",
     },
     password: {
       type: String,
@@ -59,7 +62,6 @@ userSchema.pre("save", function (next) {
 });
 
 userSchema.methods.comparePassword = function (enteredPassword) {
-  console.log(enteredPassword, this.password);
   return bcrypt.compareSync(enteredPassword, this.password);
 };
 

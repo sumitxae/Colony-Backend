@@ -1,6 +1,7 @@
 const colonyModel = require("../models/colony");
 const userModel = require("../models/user");
 const { catchAsyncError } = require("../middlewares/catchAsyncErrors");
+const teamModel = require("../models/team");
 const ErrorHandler = require("../utils/errorHandler");
 const decisionModel = require("../models/decision");
 const promoterDecision = require("../models/schemas/promotion");
@@ -8,9 +9,50 @@ const mintDecision = require("../models/schemas/mintToken");
 const paymentDecision = require("../models/schemas/expenditure");
 const { createDecisionHandler } = require("../utils/createDecisionHandler");
 
+const addColony = catchAsyncError(async (req, res, next) => {
+  const team = await teamModel.create(req.body);
+  const colony = await colonyModel.findById(req.body.colony);
+  team.members.push(req.body.createdBy);
+  colony.teams.push(team._id);
+  await team.save();
+  await colony.save();
+  res.status(200).json({ team });
+});
+
+const getActiveColonyDetails = catchAsyncError(async (req, res, next) => {
+  console.log(req.body.id);
+  const colony = await colonyModel.findById(req.body.id).populate([
+    {
+      path: "rootUsers",
+      select: "username email pfp",
+    },
+    {
+      path: "watchers",
+      select: "username email pfp",
+    },
+    {
+      path: "contributors",
+      select: "username email pfp",
+    },
+    {
+      path: "teams",
+    },
+  ]);
+  if (!colony) {
+    return next(new ErrorHandler("Colony Not Found", 404));
+  }
+  res.status(200).json(colony);
+});
+
+const sendColonyDetails = catchAsyncError(async (req, res, next) => {
+  const user = await userModel.findById(req.id).populate("colonies");
+  res.json(user.colonies);
+});
+
 const colonyCreator = catchAsyncError(async (req, res, next) => {
   const { colonyName, nativeToken, nativeTokenSymbol } = req.body;
-  const newColony = new colonyModel({
+
+  const newColony = await colonyModel.create({
     colonyName,
     nativeToken,
     nativeTokenSymbol,
@@ -18,7 +60,6 @@ const colonyCreator = catchAsyncError(async (req, res, next) => {
     rootUsers: [req.id],
     contributors: [req.id],
   });
-  newColony.save();
 
   const user = await userModel.findById(req.id);
   user.colonies.push(newColony._id);
@@ -33,12 +74,12 @@ const colonyCreator = catchAsyncError(async (req, res, next) => {
 });
 
 const joinColony = catchAsyncError(async (req, res, next) => {
-  const colonyId = req.query.colonyId;
+  const colonyId = req.body.colonyId;
   const colony = await colonyModel.findById(colonyId);
   if (!colony) {
     return next(new ErrorHandler("Colony Not Found", 404));
   }
-  const user = await userModel.findById(req.id);
+  const user = await userModel.findById(req.body.user);
   if (user.colonies.includes(colonyId)) {
     return next(
       new ErrorHandler("You are already a member of this colony!", 400)
@@ -61,35 +102,44 @@ const joinColony = catchAsyncError(async (req, res, next) => {
     .json({ status: true, message: "Joined Colony", user, colony });
 });
 
+const getAllDecisions = catchAsyncError(async (req, res, next) => {
+  const decisions = await decisionModel.find({ colony: req.body.colonyId });
+  res.status(200).json(decisions);
+});
+
 const createDecision = catchAsyncError(async (req, res, next) => {
   const votingPeriod = 1 * 60;
-  const votingEndsAt = new Date(Date.now() + votingPeriod);
-  const status = null;
+  const votingEndsAt = req.body?.forced
+    ? Date.now()
+    : new Date(Date.now() + votingPeriod);
+  let status = null;
   const decisionObject = {
     title: req.body.title,
-    description: req.body.description,
+    forced: req.body.forced,
+    description: req.body.desc,
     colony: req.body.colonyId,
-    creator: req.id,
+    creator: req.body.creator,
+    team: req.body?.team || null,
     votingEndsAt,
   };
   if (req.params.type === "payment") {
     const details = {
-      payer: req.body.payer,
-      receiver: req.body.receiver,
+      payer: req.body.creator,
+      reciever: req.body.reciever,
       amount: req.body.amount,
     };
     status = createDecisionHandler(paymentDecision, decisionObject, details);
   } else if (req.params.type === "promotion") {
     const details = {
       promoted: req.body.promoted,
-      promoter: req.body.promoter,
-      colony: req.body.colonyId,
+      promoter: req.body.creator,
+      position: req.body.position,    
     };
     status = createDecisionHandler(promoterDecision, decisionObject, details);
   } else if (req.params.type === "mint") {
     const details = {
       mintedToken: req.body.mintedToken,
-      mintee: req.id,
+      mintee: req.body.creator,
       amount: req.body.amount,
     };
     status = createDecisionHandler(mintDecision, decisionObject, details);
@@ -164,30 +214,26 @@ const mintTokens = catchAsyncError(async (req, res, next) => {
 });
 
 const promoteUser = catchAsyncError(async (req, res, next) => {
-  const colony = await colonyModel.findById(req.body.colonyId);
-  if (!colony) {
-    return next(new ErrorHandler("Colony Not Found", 404));
-  }
+  const colony = await colonyModel.findById(req.body.colony);
+
+  if (!colony) return next(new ErrorHandler("Colony Not Found", 404));
+
   if (!colony.rootUsers.includes(req.id)) {
     return next(
       new ErrorHandler("You are not authorized to promote users!", 401)
     );
-  }
+  }////////////////
 
-  const user = await userModel.findById(req.body.userId);
+  const user = await userModel.findById(req.body.promoted);
 
-  if (!user.colonies.includes(req.body.colonyId)) {
+  if (!user.colonies.includes(req.body.colonyId))
     return next(new ErrorHandler("User is not a member of this colony!", 400));
-  }
 
-  if (req.body.position === "root") {
-    colony.rootUsers.push(req.body.userId);
-  } else {
-    if (!colony.contributors.includes(req.body.userId)) {
-      colony.contributors.push(req.body.userId);
-    } else {
-      return next(new ErrorHandler("User is already a contributor!", 400));
-    }
+  if (req.body.position === "root") colony.rootUsers.push(req.body.promoted);
+  else {
+    if (!colony.contributors.includes(req.body.promoted))
+      colony.contributors.push(req.body.promoted);
+    else return next(new ErrorHandler("User is already a contributor!", 400));
   }
 
   await colony.save();
@@ -195,15 +241,26 @@ const promoteUser = catchAsyncError(async (req, res, next) => {
 });
 
 const createExpenditure = catchAsyncError(async (req, res, next) => {
-  const colony = await colonyModel.findById(req.body.colonyId);
+  const colony = await colonyModel.findById(req.body.colony);
+  const reciever = await userModel.findById(req.body.details.reciever);
+  reciever.tokens.find((token) => token.colony == req.body.colony).amount +=
+    req.body.details.amount;
+  colony.funds -= req.body.details.amount;
+  await reciever.save();
+  await colony.save();
+  res.status(200).json({ status: true, message: "Expenditure Successful" });
 });
 
 module.exports = {
+  sendColonyDetails,
   colonyCreator,
   joinColony,
+  getAllDecisions,
   createDecision,
   voteInDecision,
   mintTokens,
+  addColony,
   promoteUser,
   createExpenditure,
+  getActiveColonyDetails,
 };

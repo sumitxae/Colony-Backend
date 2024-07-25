@@ -5,7 +5,7 @@ const promoterSchema = new mongoose.Schema(
   {
     promoted: { type: mongoose.Types.ObjectId, ref: "user", required: true },
     promoter: { type: mongoose.Types.ObjectId, ref: "user", required: true },
-    colony: { type: mongoose.Types.ObjectId, ref: "colony", required: true },
+    position: { type: String, required: true },
   },
   { id: false }
 );

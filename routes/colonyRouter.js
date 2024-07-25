@@ -1,21 +1,40 @@
 const express = require("express");
 const router = express.Router();
-const { colonyCreator, joinColony, createDecision, voteInDecision, mintTokens, promoteUser, createExpenditure } = require("../controllers/colonyController");
+const {
+  sendColonyDetails,
+  colonyCreator,
+  joinColony,
+  createDecision,
+  voteInDecision,
+  mintTokens,
+  promoteUser,
+  createExpenditure,
+  addColony,
+  getAllDecisions,
+  getActiveColonyDetails,
+} = require("../controllers/colonyController");
 const { isAuthenticated } = require("../middlewares/authoriser");
+
+router.post("/add", addColony);
+
+router.post("/", isAuthenticated, sendColonyDetails);
 
 router.post("/create", isAuthenticated, colonyCreator);
 
-router.get('/join', isAuthenticated, joinColony);
+router.post("/join", joinColony);
 
-router.post('/create-decision/:type', isAuthenticated, createDecision);
+router.get("/getAllDecisions", getAllDecisions);
 
-router.post('/vote', isAuthenticated, voteInDecision);
+router.post("/create-decision/:type", createDecision);
 
-router.post('/mint-tokens', isAuthenticated, mintTokens);
+router.post("/vote", isAuthenticated, voteInDecision);
 
-router.post('promote', isAuthenticated, promoteUser);
+router.post("/mint-tokens", isAuthenticated, mintTokens);
 
-router.post('/createExpenditure', isAuthenticated, createExpenditure);
+router.post("/promote", isAuthenticated, promoteUser);
 
+router.post("/createExpenditure", createExpenditure);
+
+router.post("/getActiveColony", getActiveColonyDetails);
 
 module.exports = router;
