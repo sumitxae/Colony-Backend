@@ -4,3 +4,5 @@ exports.isLoggedIn = (req, res, next) => {
   }
   return res.status(401).json({ message: "You are not logged in!", statusCode: 401});
 };
+
+console.log("first")

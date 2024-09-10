@@ -4,8 +4,7 @@ const Decision = require("../decision");
 const mintSchema = new mongoose.Schema(
   {
     mintedToken: {
-      type: mongoose.Types.ObjectId,
-      ref: "token",
+      type: String,
       required: true,
     },
     mintee: { type: mongoose.Types.ObjectId, ref: "user", required: true },

@@ -15,6 +15,11 @@ const registerController = catchAsyncError(async (req, res, next) => {
   sendToken(newUser, 201, res);
 });
 
+const getUpdatedUser = catchAsyncError(async (req, res, next) => {
+  const user = await userModel.findById(req.id).populate("colonies");
+  res.status(200).json(user);
+});
+
 const loginController = catchAsyncError(async (req, res, next) => {
   const user = await userModel
     .findOne({ username: req.body.username })
@@ -73,4 +78,5 @@ module.exports = {
   loginController,
   logoutController,
   resetPasswordController,
+  getUpdatedUser
 };

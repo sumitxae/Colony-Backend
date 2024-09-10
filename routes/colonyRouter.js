@@ -7,34 +7,44 @@ const {
   createDecision,
   voteInDecision,
   mintTokens,
-  promoteUser,
+  promoteorDemoteUser,
   createExpenditure,
   addColony,
   getAllDecisions,
   getActiveColonyDetails,
+  createNewTeam,
+  editTeam,
+  editColonyDetails,
 } = require("../controllers/colonyController");
 const { isAuthenticated } = require("../middlewares/authoriser");
 
-router.post("/add", addColony);
-
 router.post("/", isAuthenticated, sendColonyDetails);
+
+router.post("/add", addColony);
 
 router.post("/create", isAuthenticated, colonyCreator);
 
-router.post("/join", joinColony);
+router.post("/join", isAuthenticated, joinColony);
 
-router.get("/getAllDecisions", getAllDecisions);
+router.post("/getActiveColony", isAuthenticated, getActiveColonyDetails);
 
-router.post("/create-decision/:type", createDecision);
+router.post("/create-decision/", isAuthenticated, createDecision);
+
+router.post("/getAllDecisions", isAuthenticated, getAllDecisions);
 
 router.post("/vote", isAuthenticated, voteInDecision);
 
-router.post("/mint-tokens", isAuthenticated, mintTokens);
+router.post("/create/team", isAuthenticated, createNewTeam);
 
-router.post("/promote", isAuthenticated, promoteUser);
+router.post("/edit/team/:id", isAuthenticated, editTeam);
+
+router.post("/edit/cololny/:id", isAuthenticated, editColonyDetails);
+
+router.post("/mint-tokens", mintTokens);
+
+router.post("/promote", promoteorDemoteUser);
 
 router.post("/createExpenditure", createExpenditure);
 
-router.post("/getActiveColony", getActiveColonyDetails);
 
 module.exports = router;

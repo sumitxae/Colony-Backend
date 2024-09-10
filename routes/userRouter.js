@@ -8,6 +8,7 @@ const {
   loginController,
   forgetPasswordController,
   resetPasswordController,
+  getUpdatedUser,
 } = require("../controllers/userController");
 const { isAuthenticated } = require("../middlewares/authoriser");
 
@@ -17,6 +18,8 @@ router.post("/register", upload.single("image"), registerController);
 router.post("/login", loginController);
 
 router.post("/logout", isAuthenticated, logoutController);
+
+router.post("/getUpdatedUser", isAuthenticated, getUpdatedUser);
 
 router.post("/reset-password/v1", forgetPasswordController);
 

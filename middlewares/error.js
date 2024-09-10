@@ -1,5 +1,5 @@
 exports.generatedError = (err, req, res, next) => {
-  console.log(err.message);
+  console.log("message: ", err);
   const statsuCode = err.statusCode || 500;
 
   if (err.name === "MongoServerError" && err.message.includes("E11000")) {

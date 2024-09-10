@@ -6,7 +6,7 @@ exports.sendToken = (user, statusCode, res) => {
       Date.now() + process.env.JWT_COOKIE_EXPIRES_TIME * 1000 // 24 hours
     ),
   };
-
+  
   res.status(statusCode).cookie("token", token, options).json({
     success: true,
     user: user,

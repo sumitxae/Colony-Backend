@@ -38,32 +38,29 @@ const updateDecision = async function () {
         let response;
         switch (motion.type) {
           case "Expenditure":
-            console.log("Payment decision details:", motion.details);
             response = await axios.post(
               `${endpointUrl}/createExpenditure`,
               motion
             );
             break;
-          case "Promote":
-            console.log("Promote decision details:", motion.details);
+          case "Reassign":
             response = await axios.post(
               `${endpointUrl}/promote`,
-              motion.details
+              motion
             );
             break;
           case "MintTokens":
-            console.log("MintTokens decision details:", motion.details);
             response = await axios.post(
               `${endpointUrl}/mint-tokens`,
-              motion.details
+              motion
             );
             break;
           default:
-            console.log("Unknown decision type");
+            console.log("Miscellaneous decision type");
         }
         console.log("Action response:", response.data);
       } catch (error) {
-        console.error(`Error processing ${motion.type} decision:`, error);
+        // console.error(`Error processing ${motion.type} decision:`, error);
       }
     }
   }
